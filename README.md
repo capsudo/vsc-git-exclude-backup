@@ -6,7 +6,7 @@ VSC (VS Code/VSCodium) extension that backs up private files listed by `.git/inf
 
 - [x] Loads as a VSC extension.
 - [x] Provides initial settings for backup repository, branch, ignore globs, auto-backup and Explorer decoration.
-- [ ] Lists files ignored by current Git repository using `.git/info/exclude`.
+- [x] Detects files ignored by current Git repository using `.git/info/exclude`.
 - [ ] Provides commands to back up listed files.
 - [ ] Automatically backs up listed files (if modified) after each push.
 - [ ] Shows badges for backup status in VSC Explorer.
