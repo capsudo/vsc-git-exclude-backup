@@ -41,6 +41,14 @@ git-exclude-backups/
 
 Hover a decorated file in Explorer to see the full status text.
 
+## Settings
+
+- `gitExcludeBackup.backupRepositoryName`: GitHub repository name. Default: `git-exclude-backups`.
+- `gitExcludeBackup.backupBranch`: Branch used in backup repository. Default: `master`.
+- `gitExcludeBackup.extraBackupIgnoreGlobs`: Extra patterns for managed files that should not be backed up.
+- `gitExcludeBackup.backupAfterDetectedPush`: Run backup after detected push. Default: `true`.
+- `gitExcludeBackup.decorateExplorer`: Show Explorer badges. Default: `true`.
+
 ## Notes
 
 - By default, `.git/info/exclude` is used to list files to back up. `.gitignore` is not used because it often contains cache/build files that do not need backup.

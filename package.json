@@ -22,10 +22,43 @@
         "command": "gitExcludeBackup.showLoadedMessage",
         "title": "Git Exclude Backup: Show Loaded Message"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Git Exclude Backup",
+      "properties": {
+        "gitExcludeBackup.backupRepositoryName": {
+          "type": "string",
+          "default": "git-exclude-backups",
+          "description": "GitHub repository name used to store excluded-file backups."
+        },
+        "gitExcludeBackup.backupBranch": {
+          "type": "string",
+          "default": "master",
+          "description": "Branch used in the GitHub backup repository."
+        },
+        "gitExcludeBackup.extraBackupIgnoreGlobs": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Extra glob patterns for excluded files that should not be backed up."
+        },
+        "gitExcludeBackup.backupAfterDetectedPush": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run backup after VS Code Git status suggests a push completed."
+        },
+        "gitExcludeBackup.decorateExplorer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show explorer badges for excluded-file backup status."
+        }
+      }
+    }
   },
   "scripts": {
-    "check": "node --check extension.js"
+    "check": "node --check extension.js && node --check src/constants.js && node --check src/config.js"
   },
   "devDependencies": {}
 }
