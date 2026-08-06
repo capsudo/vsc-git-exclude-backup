@@ -1,0 +1,31 @@
+{
+  "name": "git-exclude-backup",
+  "displayName": "Git Exclude Backup",
+  "description": "Back up private files in Git repos to GitHub.",
+  "version": "0.1.0",
+  "author": "capsudo",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:gitExcludeBackup.showLoadedMessage"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitExcludeBackup.showLoadedMessage",
+        "title": "Git Exclude Backup: Show Loaded Message"
+      }
+    ]
+  },
+  "scripts": {
+    "check": "node --check extension.js"
+  },
+  "devDependencies": {}
+}
