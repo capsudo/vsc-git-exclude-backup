@@ -6,14 +6,12 @@ const {
   BACKUP_STATE_FILE_NAME,
   BACKUP_STATUS_DECORATIONS
 } = require('./src/constants');
-const { getGitExcludeBackupConfiguration } = require('./src/config');
+const { getExtensionConfiguration } = require('./src/config');
 
 let outputChannel;
 
-/**
- * Starts extension shell.
- * Example: registers command shown in command palette.
- */
+// starts extension shell
+// registers command shown in command palette
 function activate(context) {
   outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
@@ -23,12 +21,10 @@ function activate(context) {
   outputChannel.appendLine('Git Exclude Backup extension shell activated.');
 }
 
-/**
- * Shows basic command result.
- * Example: command proves extension activates and command wiring works.
- */
+// shows basic command result
+// proves extension activates and command wiring works
 function showLoadedMessage() {
-  const extensionConfiguration = getGitExcludeBackupConfiguration();
+  const extensionConfiguration = getExtensionConfiguration();
   const message = 'Git Exclude Backup extension shell is loaded.';
 
   outputChannel.appendLine(message);
@@ -40,10 +36,8 @@ function showLoadedMessage() {
   vscode.window.showInformationMessage(message);
 }
 
-/**
- * Stops extension shell.
- * Example: VS Code calls this before unloading extension.
- */
+// stops extension shell
+// VSC calls this before unloading extension
 function deactivate() {
   if (outputChannel) {
     outputChannel.appendLine('Git Exclude Backup extension shell deactivated.');

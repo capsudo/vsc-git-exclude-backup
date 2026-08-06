@@ -6,11 +6,9 @@ const {
   DEFAULT_BACKUP_BRANCH
 } = require('./constants');
 
-/**
- * Returns extension settings from VSC.
- * Example: returns pref object { backupBranch: "master" }.
- */
-function getGitExcludeBackupConfiguration() {
+// returns extension settings from VSC
+// ex: { backupRepositoryName: "git-exclude-backups", backupBranch: "master", extraBackupIgnoreGlobs: [] }
+function getExtensionConfiguration() {
   const configuration = vscode.workspace.getConfiguration(EXTENSION_ID);
 
   return {
@@ -23,5 +21,5 @@ function getGitExcludeBackupConfiguration() {
 }
 
 module.exports = {
-  getGitExcludeBackupConfiguration
+  getExtensionConfiguration
 };
