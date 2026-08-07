@@ -1,4 +1,5 @@
 const EXTENSION_ID = 'gitExcludeBackup';
+const BACKUPS_SIDEBAR_VIEW_ID = 'gitExcludeBackup.backupsView';
 
 const DEFAULT_BACKUP_REPOSITORY_NAME = 'git-exclude-backups';
 const DEFAULT_BACKUP_BRANCH = 'master';
@@ -26,13 +27,24 @@ const BACKUP_STATUS_DECORATIONS = Object.freeze({
   ignoredFromBackup: { badge: '○', tooltip: 'ignored by extension settings' }
 });
 
+const BACKUP_STATUS_LABELS = Object.freeze({
+  synced: 'synced',
+  modified: 'modified',
+  new: 'new',
+  deleted: 'deleted',
+  syncing: 'syncing',
+  error: 'error',
+  ignoredFromBackup: 'ignored from backup'
+});
+
 module.exports = {
   EXTENSION_ID,
-  OUTPUT_CHANNEL_NAME,
+  BACKUPS_SIDEBAR_VIEW_ID,
   DEFAULT_BACKUP_REPOSITORY_NAME,
   DEFAULT_BACKUP_BRANCH,
   PROJECTS_LIST_FILE_NAME,
   BACKUP_STATE_FILE_NAME,
   BACKUP_STATUS,
-  BACKUP_STATUS_DECORATIONS
+  BACKUP_STATUS_DECORATIONS,
+  BACKUP_STATUS_LABELS
 };

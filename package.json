@@ -13,11 +13,18 @@
     "Other"
   ],
   "activationEvents": [
+    "onStartupFinished",
+    "onView:gitExcludeBackup.backupsView",
+    "onCommand:gitExcludeBackup.refresh",
     "onCommand:gitExcludeBackup.showLoadedMessage"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "gitExcludeBackup.refresh",
+        "title": "Git Exclude Backup: Refresh Status"
+      },
       {
         "command": "gitExcludeBackup.showLoadedMessage",
         "title": "Git Exclude Backup: Show Loaded Message"
@@ -55,10 +62,27 @@
           "description": "Show explorer badges for excluded-file backup status."
         }
       }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "gitExcludeBackup.backupsView",
+          "name": "Git Exclude Backups"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "gitExcludeBackup.refresh",
+          "when": "view == gitExcludeBackup.backupsView",
+          "group": "navigation@1"
+        }
+      ]
     }
   },
   "scripts": {
-    "check": "node --check extension.js && node --check src/constants.js && node --check src/config.js && node --check src/file-decoration-provider.js && node --check src/helpers.js && node --check src/workspace-state.js && node --check scripts/test-workspace-state.js",
+    "check": "node --check extension.js && node --check src/constants.js && node --check src/config.js && node --check src/sidebar-view-provider.js && node --check src/file-decoration-provider.js && node --check src/helpers.js && node --check src/workspace-state.js && node --check scripts/test-workspace-state.js",
     "test:scanner": "node scripts/test-workspace-state.js"
   },
   "devDependencies": {}

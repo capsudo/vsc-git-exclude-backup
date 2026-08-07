@@ -91,6 +91,7 @@ async function buildWorkspaceState(workspaceDirectory, extensionConfiguration = 
 
 // rebuilds workspace state for given VSC workspace folders
 // returns Map { "/path/to/project" => workspaceStateObject }
+// Note: currenlty only extraBackupIgnoreGlobs is used in extensionConfiguration (by buildWorkspaceState)
 async function refreshWorkspaceStates(workspaceFolders, extensionConfiguration) {
   const nextWorkspaceStatesByFolderPath = new Map();
 

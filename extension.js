@@ -1,12 +1,13 @@
 const vscode = require('vscode');
 
 const {
-  OUTPUT_CHANNEL_NAME,
+  BACKUPS_SIDEBAR_VIEW_ID,
   PROJECTS_LIST_FILE_NAME,
   BACKUP_STATE_FILE_NAME,
   BACKUP_STATUS_DECORATIONS
 } = require('./src/constants');
 const { getExtensionConfiguration } = require('./src/config');
+const { createSidebarViewProvider } = require('./src/sidebar-view-provider');
 const {
   disposeFileDecorationProvider,
   refreshFileDecorationProvider,
@@ -19,23 +20,31 @@ const {
 } = require('./src/workspace-state');
 
 let outputChannel;
+let sidebarViewProvider;
 let extensionDisplayName;
 
 // starts extension shell
 // registers command shown in command palette
-function activate(context) {
+async function activate(context) {
   const extensionConfiguration = getExtensionConfiguration();
   extensionDisplayName = getExtensionDisplayName(context);
 
   outputChannel = vscode.window.createOutputChannel(extensionDisplayName);
+  sidebarViewProvider = createSidebarViewProvider(getWorkspaceStatesByFolderPath);
+
   updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
 
   context.subscriptions.push(outputChannel);
+  context.subscriptions.push(sidebarViewProvider);
+  context.subscriptions.push(vscode.window.registerTreeDataProvider(BACKUPS_SIDEBAR_VIEW_ID, sidebarViewProvider));
   context.subscriptions.push({ dispose: disposeFileDecorationProvider });
+  context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.refresh', refreshWorkspaceStateAndViews));
   context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.showLoadedMessage', showLoadedMessage));
   context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(onExtensionConfigurationChanged));
+  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(refreshWorkspaceStateAndViews));
 
-  outputChannel.appendLine('Git Exclude Backup extension shell activated.');
+  outputChannel.appendLine(`${extensionDisplayName} extension shell activated.`);
+  await refreshWorkspaceStateAndViews();
 }
 
 // shows basic command result and local workspace state summary
@@ -44,6 +53,8 @@ async function showLoadedMessage() {
   const extensionConfiguration = getExtensionConfiguration();
   const message = `${extensionDisplayName} extension shell is loaded.`;
 
+  await refreshWorkspaceStateAndViews();
+
   outputChannel.appendLine(message);
   outputChannel.appendLine(`Backup repo: ${extensionConfiguration.backupRepositoryName}`);
   outputChannel.appendLine(`Backup branch: ${extensionConfiguration.backupBranch}`);
@@ -51,14 +62,28 @@ async function showLoadedMessage() {
   outputChannel.appendLine(`Backup state file: ${BACKUP_STATE_FILE_NAME}`);
   outputChannel.appendLine(`Known badges: ${Object.values(BACKUP_STATUS_DECORATIONS).map((decoration) => decoration.badge).join(' ')}`);
 
-  // refreshWorkspaceStates stores workspace states in memory inside workspace-state.js
-  await refreshWorkspaceStates(vscode.workspace.workspaceFolders || [], extensionConfiguration);
-  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
-  refreshFileDecorationProvider();
-
   logWorkspaceStateSummaries();
 
   vscode.window.showInformationMessage(message);
+}
+
+// rebuilds local workspace state, then refreshes Explorer badges and sidebar view
+// ex: refresh command calls this after .git/info/exclude or managed files changed
+async function refreshWorkspaceStateAndViews() {
+  // 0. get extension options
+  const extensionConfiguration = getExtensionConfiguration();
+
+  // 1. refresh state. requires extraBackupIgnoreGlobs setting
+  // Note: refreshWorkspaceStates stores workspace states in memory inside workspace-state.js
+  await refreshWorkspaceStates(vscode.workspace.workspaceFolders || [], extensionConfiguration);
+
+  // 2. Update backup badges in Explorer main view (tree)
+  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
+  refreshFileDecorationProvider();
+
+  // 3. Update the custom sidebar view
+  // Note: this view can be moved in VSC workbench, but by default it is in left Sidebar, inside Explorer view container
+  refreshSidebarViewProvider();
 }
 
 // logs workspace state for every open workspace folder
@@ -89,14 +114,24 @@ function logWorkspaceStateSummaries() {
 }
 
 function onExtensionConfigurationChanged(event) {
-  if (!event.affectsConfiguration('gitExcludeBackup.decorateExplorer')) {
+  if (!extensionConfigurationChangeAffectsCurrentStateOrViews(event)) {
     return;
   }
 
-  const extensionConfiguration = getExtensionConfiguration();
+  refreshWorkspaceStateAndViews();
+}
 
-  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
-  refreshFileDecorationProvider();
+function refreshSidebarViewProvider() {
+  if (sidebarViewProvider) {
+    sidebarViewProvider.refresh();
+  }
+}
+
+// returns true when changed setting can change current state, badges or sidebar view
+// ex: extraBackupIgnoreGlobs changes ignoredFromBackup status; decorateExplorer enables/disables Explorer badges
+function extensionConfigurationChangeAffectsCurrentStateOrViews(event) {
+  return event.affectsConfiguration('gitExcludeBackup.extraBackupIgnoreGlobs') ||
+    event.affectsConfiguration('gitExcludeBackup.decorateExplorer');
 }
 
 // returns extension display name from package.json loaded by VSC

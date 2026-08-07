@@ -9,9 +9,9 @@ VSC (VS Code/VSCodium) extension that backs up private files listed by `.git/inf
 - [x] Detects files ignored by current Git repository using `.git/info/exclude`.
 - [x] Builds local workspace state with project identity, file hashes and initial backup status.
 - [x] Shows badges for backup status in VSC Explorer.
+- [x] Lists all projects with managed files in custom `Git Exclude Backups` sidebar view.
 - [ ] Provides commands to back up listed files.
 - [ ] Automatically backs up listed files (if modified) after each push.
-- [ ] Shows a global `Git Exclude Backups` tree in Explorer.
 
 ## How Files Are Backed Up
 
@@ -41,6 +41,10 @@ git-exclude-backups/
 | `○` | File is ignored by extension settings |
 
 Hover a decorated file in Explorer to see the full status text.
+
+## Commands
+
+- `Git Exclude Backup: Refresh Status`
 
 ## Settings
 
