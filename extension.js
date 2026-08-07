@@ -7,17 +7,31 @@ const {
   BACKUP_STATUS_DECORATIONS
 } = require('./src/constants');
 const { getExtensionConfiguration } = require('./src/config');
-const { buildWorkspaceState } = require('./src/workspace-state');
+const {
+  disposeFileDecorationProvider,
+  refreshFileDecorationProvider,
+  updateFileDecorationProviderRegistration
+} = require('./src/file-decoration-provider');
+const {
+  getStatusEntryForUri,
+  getWorkspaceStatesByFolderPath,
+  refreshWorkspaceStates
+} = require('./src/workspace-state');
 
 let outputChannel;
 
 // starts extension shell
 // registers command shown in command palette
 function activate(context) {
+  const extensionConfiguration = getExtensionConfiguration();
+
   outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
 
   context.subscriptions.push(outputChannel);
+  context.subscriptions.push({ dispose: disposeFileDecorationProvider });
   context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.showLoadedMessage', showLoadedMessage));
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(onExtensionConfigurationChanged));
 
   outputChannel.appendLine('Git Exclude Backup extension shell activated.');
 }
@@ -35,14 +49,19 @@ async function showLoadedMessage() {
   outputChannel.appendLine(`Backup state file: ${BACKUP_STATE_FILE_NAME}`);
   outputChannel.appendLine(`Known badges: ${Object.values(BACKUP_STATUS_DECORATIONS).map((decoration) => decoration.badge).join(' ')}`);
 
-  await logWorkspaceStateSummaries(extensionConfiguration);
+  // refreshWorkspaceStates stores workspace states in memory inside workspace-state.js
+  await refreshWorkspaceStates(vscode.workspace.workspaceFolders || [], extensionConfiguration);
+  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
+  refreshFileDecorationProvider();
+
+  logWorkspaceStateSummaries();
 
   vscode.window.showInformationMessage(message);
 }
 
 // logs workspace state for every open workspace folder
 // ex: prints project id, managed file count, file statuses
-async function logWorkspaceStateSummaries(extensionConfiguration) {
+function logWorkspaceStateSummaries() {
   const workspaceFolders = vscode.workspace.workspaceFolders || [];
 
   if (workspaceFolders.length === 0) {
@@ -51,19 +70,31 @@ async function logWorkspaceStateSummaries(extensionConfiguration) {
   }
 
   for (const workspaceFolder of workspaceFolders) {
-    const workspaceState = await buildWorkspaceState(workspaceFolder.uri.fsPath, extensionConfiguration);
+    const workspaceStatesByFolderPath = getWorkspaceStatesByFolderPath();
+    const workspaceState = workspaceStatesByFolderPath.get(workspaceFolder.uri.fsPath);
 
     outputChannel.appendLine(`Workspace: ${workspaceFolder.uri.fsPath}`);
-    outputChannel.appendLine(`Git root: ${workspaceState.gitRootDirectory || 'not a git repo'}`);
-    outputChannel.appendLine(`Exclude file: ${workspaceState.excludeFilePath || 'none'}`);
-    outputChannel.appendLine(`Project id: ${workspaceState.projectInfo ? workspaceState.projectInfo.id : 'none'}`);
-    outputChannel.appendLine(`Managed files: ${workspaceState.managedFiles.length}`);
+    outputChannel.appendLine(`Git root: ${workspaceState && workspaceState.gitRootDirectory ? workspaceState.gitRootDirectory : 'not a git repo'}`);
+    outputChannel.appendLine(`Exclude file: ${workspaceState && workspaceState.excludeFilePath ? workspaceState.excludeFilePath : 'none'}`);
+    outputChannel.appendLine(`Project id: ${workspaceState && workspaceState.projectInfo ? workspaceState.projectInfo.id : 'none'}`);
+    outputChannel.appendLine(`Managed files: ${workspaceState ? workspaceState.managedFiles.length : 0}`);
 
-    for (const managedFile of workspaceState.managedFiles) {
+    for (const managedFile of workspaceState ? workspaceState.managedFiles : []) {
       const statusEntry = workspaceState.statusMapByAbsolutePath.get(managedFile.absolutePath);
       outputChannel.appendLine(`- ${managedFile.relativePath}: ${statusEntry ? statusEntry.status : 'unknown'}`);
     }
   }
+}
+
+function onExtensionConfigurationChanged(event) {
+  if (!event.affectsConfiguration('gitExcludeBackup.decorateExplorer')) {
+    return;
+  }
+
+  const extensionConfiguration = getExtensionConfiguration();
+
+  updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
+  refreshFileDecorationProvider();
 }
 
 // stops extension shell
@@ -72,6 +103,7 @@ function deactivate() {
   if (outputChannel) {
     outputChannel.appendLine('Git Exclude Backup extension shell deactivated.');
   }
+  disposeFileDecorationProvider();
 }
 
 module.exports = {

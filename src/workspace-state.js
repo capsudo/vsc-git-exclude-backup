@@ -11,6 +11,8 @@ const {
   statOrUndefined
 } = require('./helpers');
 
+let workspaceStatesByFolderPath = new Map();
+
 // workspace state object:
 // - gitRootDirectory: might be needed because VSC workspace can be opened from repo subfolder
 // - excludeFilePath: can be useful later for debug messages and empty-state messages
@@ -85,6 +87,40 @@ async function buildWorkspaceState(workspaceDirectory, extensionConfiguration = 
     managedFiles,
     statusMapByAbsolutePath
   };
+}
+
+// rebuilds workspace state for given VSC workspace folders
+// returns Map { "/path/to/project" => workspaceStateObject }
+async function refreshWorkspaceStates(workspaceFolders, extensionConfiguration) {
+  const nextWorkspaceStatesByFolderPath = new Map();
+
+  for (const workspaceFolder of workspaceFolders) {
+    const workspaceDirectory = workspaceFolder.uri ? workspaceFolder.uri.fsPath : workspaceFolder;
+    const workspaceState = await buildWorkspaceState(workspaceDirectory, extensionConfiguration);
+    nextWorkspaceStatesByFolderPath.set(workspaceDirectory, workspaceState);
+  }
+
+  workspaceStatesByFolderPath = nextWorkspaceStatesByFolderPath;
+  return workspaceStatesByFolderPath;
+}
+
+// returns last workspace states map built by refreshWorkspaceStates
+// ex: Map { "/path/to/project" => { gitRootDirectory: "/path/to/project", managedFiles: [...] } }
+function getWorkspaceStatesByFolderPath() {
+  return workspaceStatesByFolderPath;
+}
+
+// returns status entry for exact file URI shown in Explorer or undefined if not managed
+// ex: uri.fsPath "/path/to/project/.env" returns { status: "new", relativePath: ".env" }
+function getStatusEntryForUri(uri) {
+  for (const workspaceState of workspaceStatesByFolderPath.values()) {
+    const statusEntry = workspaceState.statusMapByAbsolutePath.get(uri.fsPath);
+    if (statusEntry) {
+      return statusEntry;
+    }
+  }
+
+  return undefined;
 }
 
 // returns stable project identity used later in backup repo path
@@ -225,6 +261,9 @@ function sanitizePathSegment(value) {
 
 module.exports = {
   buildWorkspaceState,
+  refreshWorkspaceStates,
+  getStatusEntryForUri,
+  getWorkspaceStatesByFolderPath,
   buildProjectIdentity,
   buildStatusMapByAbsolutePath,
   getGitInfoExcludeFilePath,
