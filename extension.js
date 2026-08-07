@@ -19,13 +19,15 @@ const {
 } = require('./src/workspace-state');
 
 let outputChannel;
+let extensionDisplayName;
 
 // starts extension shell
 // registers command shown in command palette
 function activate(context) {
   const extensionConfiguration = getExtensionConfiguration();
+  extensionDisplayName = getExtensionDisplayName(context);
 
-  outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  outputChannel = vscode.window.createOutputChannel(extensionDisplayName);
   updateFileDecorationProviderRegistration(extensionConfiguration.decorateExplorer, getStatusEntryForUri);
 
   context.subscriptions.push(outputChannel);
@@ -40,7 +42,7 @@ function activate(context) {
 // proves extension activates, settings load, and workspace state builds
 async function showLoadedMessage() {
   const extensionConfiguration = getExtensionConfiguration();
-  const message = 'Git Exclude Backup extension shell is loaded.';
+  const message = `${extensionDisplayName} extension shell is loaded.`;
 
   outputChannel.appendLine(message);
   outputChannel.appendLine(`Backup repo: ${extensionConfiguration.backupRepositoryName}`);
@@ -97,11 +99,16 @@ function onExtensionConfigurationChanged(event) {
   refreshFileDecorationProvider();
 }
 
+// returns extension display name from package.json loaded by VSC
+function getExtensionDisplayName(context) {
+  return context.extension.packageJSON.displayName || context.extension.packageJSON.name;
+}
+
 // stops extension shell
 // VSC calls this before unloading extension
 function deactivate() {
   if (outputChannel) {
-    outputChannel.appendLine('Git Exclude Backup extension shell deactivated.');
+    outputChannel.appendLine(`${extensionDisplayName} extension shell deactivated.`);
   }
   disposeFileDecorationProvider();
 }
