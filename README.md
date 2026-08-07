@@ -10,6 +10,7 @@ VSC (VS Code/VSCodium) extension that backs up private files listed by `.git/inf
 - [x] Builds local workspace state with project identity, file hashes and initial backup status.
 - [x] Shows badges for backup status in VSC Explorer.
 - [x] Lists all projects with managed files in custom `Git Exclude Backups` sidebar view.
+- [x] Connects to GitHub through VSC authentication and reads current GitHub user.
 - [ ] Provides commands to back up listed files.
 - [ ] Automatically backs up listed files (if modified) after each push.
 
@@ -59,3 +60,5 @@ Hover a decorated file in Explorer to see the full status text.
 - By default, `.git/info/exclude` is used to list files to back up. `.gitignore` is not used because it often contains cache/build files that do not need backup.
 
 - Backup structure (on private repo) was chosen so it's easy to browse on GitHub. Projects files are stored at root under their project directory, `_projects-list.json` stores projects metadata but each project has its own `_backup-state.json`, so backing up one project does not rewrite one large global state file. It also helps in case of a corrupted state so only one project is affected. `_` prefix is used so those metadata files appear first in GitHub file listings and are less likely to conflict with project files.
+
+- GitHub permission scope is `repo`, because private backup repositories need read/write content access.

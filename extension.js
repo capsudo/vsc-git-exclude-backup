@@ -7,6 +7,7 @@ const {
   BACKUP_STATUS_DECORATIONS
 } = require('./src/constants');
 const { getExtensionConfiguration } = require('./src/config');
+const { readAuthenticatedGitHubUser } = require('./src/github-client');
 const { createSidebarViewProvider } = require('./src/sidebar-view-provider');
 const {
   disposeFileDecorationProvider,
@@ -39,6 +40,7 @@ async function activate(context) {
   context.subscriptions.push(vscode.window.registerTreeDataProvider(BACKUPS_SIDEBAR_VIEW_ID, sidebarViewProvider));
   context.subscriptions.push({ dispose: disposeFileDecorationProvider });
   context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.refresh', refreshWorkspaceStateAndViews));
+  context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.showGitHubUser', showGitHubUser));
   context.subscriptions.push(vscode.commands.registerCommand('gitExcludeBackup.showLoadedMessage', showLoadedMessage));
   context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(onExtensionConfigurationChanged));
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(refreshWorkspaceStateAndViews));
@@ -65,6 +67,29 @@ async function showLoadedMessage() {
   logWorkspaceStateSummaries();
 
   vscode.window.showInformationMessage(message);
+}
+
+// signs in to GitHub through VSC, then logs current GitHub user
+// ex: command output shows "GitHub user: octocat"
+async function showGitHubUser() {
+  try {
+    outputChannel.show(true);
+    outputChannel.appendLine('Checking GitHub authentication...');
+
+    const authenticatedGitHubUser = await readAuthenticatedGitHubUser();
+    const gitHubUserLogin = authenticatedGitHubUser.user.login;
+    const gitHubSessionLabel = authenticatedGitHubUser.sessionAccount.label;
+
+    outputChannel.appendLine(`GitHub user: ${gitHubUserLogin}`);
+    outputChannel.appendLine(`VSC GitHub account: ${gitHubSessionLabel}`);
+
+    vscode.window.showInformationMessage(`GitHub user: ${gitHubUserLogin}`);
+  } catch (error) {
+    const errorMessage = error && error.message ? error.message : String(error);
+
+    outputChannel.appendLine(`GitHub authentication failed: ${errorMessage}`);
+    vscode.window.showErrorMessage(`GitHub authentication failed: ${errorMessage}`);
+  }
 }
 
 // rebuilds local workspace state, then refreshes Explorer badges and sidebar view

@@ -7,6 +7,12 @@ const DEFAULT_BACKUP_BRANCH = 'master';
 const PROJECTS_LIST_FILE_NAME = '_projects-list.json';
 const BACKUP_STATE_FILE_NAME = '_backup-state.json';
 
+const GITHUB_AUTH_PROVIDER_ID = 'github';
+// repo scope is needed later to create and update private backup repository
+const GITHUB_AUTH_SCOPES = Object.freeze(['repo']);
+const GITHUB_API_BASE_URL = 'https://api.github.com';
+const GITHUB_API_VERSION = '2022-11-28';
+
 const BACKUP_STATUS = Object.freeze({
   synced: 'synced',
   modified: 'modified',
@@ -44,6 +50,10 @@ module.exports = {
   DEFAULT_BACKUP_BRANCH,
   PROJECTS_LIST_FILE_NAME,
   BACKUP_STATE_FILE_NAME,
+  GITHUB_AUTH_PROVIDER_ID,
+  GITHUB_AUTH_SCOPES,
+  GITHUB_API_BASE_URL,
+  GITHUB_API_VERSION,
   BACKUP_STATUS,
   BACKUP_STATUS_DECORATIONS,
   BACKUP_STATUS_LABELS
